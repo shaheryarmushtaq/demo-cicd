@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+   #   - name: Set up Docker Buildx
+   #     uses: docker/setup-buildx-action@v2
+
+   #   - name: Log in to Docker Hub
+   #     run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          docker build -t team-class .
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    steps:
+   #   - name: Checkout repository
+   #     uses: actions/checkout@v2
+      
+      - name: Deploy Docker container
+        run: |
+          echo "Deploying Docker container..."
+          docker stop team-class || true
+          docker rm team-class || true
+          docker run -d --name team-class -p 81:80 team-class
+
+  test:
+    runs-on: self-hosted
+    needs: deploy
+    steps:
+   #   - name: Checkout repository
+   #     uses: actions/checkout@v2
+      
+      - name: Test if the server is up
+        run: |
+          echo "Testing if the server is up..."
+          sudo apt-get update && sudo apt-get install -y curl
+          sleep 10
+          bash -c '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.172.26.36:81) == "200" ]]'
