@@ -1,49 +1,53 @@
-name: CI Pipeline
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main  # Change this to your default branch name
+  pull_request:
+    branches:
+      - main  # Change this to your default branch name
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: [self-hosted, sheri-runner]  # Use your self-hosted runner tag here
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      
-   #   - name: Set up Docker Buildx
-   #     uses: docker/setup-buildx-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-   #   - name: Log in to Docker Hub
-   #     run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-      
       - name: Build Docker image
         run: |
           echo "Building Docker image..."
-          docker build -t team-class .
+          docker build -t pclass-shaheryar .
 
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, sheri-runner]  # Use your self-hosted runner tag here
     needs: build
     steps:
-   #   - name: Checkout repository
-   #     uses: actions/checkout@v2
-      
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Deploy Docker container
         run: |
           echo "Deploying Docker container..."
-          docker stop team-class || true
-          docker rm team-class || true
-          docker run -d --name team-class -p 81:80 team-class
+          docker stop pclass-shaheryar || true
+          docker rm pclass-shaheryar || true
+          docker run -d --name pclass-shaheryar -p 81:80 pclass-shaheryar
 
   test:
-    runs-on: self-hosted
+    runs-on: [self-hosted, sheri-runner]  # Use your self-hosted runner tag here
     needs: deploy
     steps:
-   #   - name: Checkout repository
-   #     uses: actions/checkout@v2
-      
-      - name: Test if the server is up
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
+
+      - name: Test server
         run: |
           echo "Testing if the server is up..."
-          sudo apt-get update && sudo apt-get install -y curl
           sleep 10
-          bash -c '[[ $(curl -s -o /dev/null -w "%{http_code}" http://103.172.26.36:81) == "200" ]]'
+          if [[ $(curl -s -o /dev/null -w "%{http_code}" http://103.172.26.36:81) != "200" ]]; then
+            exit 1
+          fi
