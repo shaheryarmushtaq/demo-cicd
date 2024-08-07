@@ -1,12 +1,7 @@
-name: CI
+name: CI Pipeline
 
-on:
-  push:
-    branches:
-      - main  # Change this to your default branch name
-  pull_request:
-    branches:
-      - main  # Change this to your default branch name
+on: [push, pull_request]
+
 
 jobs:
   build:
